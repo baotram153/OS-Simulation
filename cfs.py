@@ -10,9 +10,35 @@ from task import Task, Normal, Realtime
 MIGRATION_COST = 0.5
 NR_MIGRATE = 32
 
+class Scheduler:
+    def __init__(self) -> None:
+        self.all_tasks_done = []
+        self.FEEDBACK_PERIOD = 100     # microsecond
+        self.tasks_to_feedback = []
 
-class CFSScheduler:
+    def calc_avg(self, task_list):
+        avg_response_time = np.average([task.response_time for task in task_list])
+        avg_waiting_time = np.average([task.waiting_time for task in task_list])
+        avg_turnaround_time = np.average([task.turnaround_time for task in task_list])
+        task_list.clear()
+        return avg_response_time, avg_waiting_time, avg_turnaround_time
+    
+    def print_avg(self, task_list):
+        nr_tasks = len(task_list)
+        avg_response_time, avg_waiting_time, avg_turnaround_time = self.calc_avg(task_list)
+        print("CALCULATE AVERAGE")
+        print("==========================================")
+        print(f"- Number of tasks: {nr_tasks}")
+        print(f"- Average response time: {avg_response_time}")
+        print(f"- Average waiting time: {avg_waiting_time}")
+        print(f"- Average turnaround time: {avg_turnaround_time}")
+        print("\n")
+
+    
+
+class CFSScheduler (Scheduler):
     def __init__(self, task_list) -> None:
+        super().__init__()
         self.task_list = task_list[1:]
         self.tasks_sorted = SortedKeyList (key = lambda task: task.vruntime)
         fst_task = task_list[0]
@@ -45,6 +71,8 @@ class CFSScheduler:
         else: 
             self.nr_running -= 1
             self.load_weight -= task.weight
+            self.all_tasks_done.append(task)
+            self.tasks_to_feedback.append(task)
             self.print_proc_in_queue()
 
     def print_proc_in_queue (self):
@@ -54,8 +82,10 @@ class CFSScheduler:
         for task in self.tasks_sorted:
             print (f"{task.pid}, {task.vruntime}, {task.exec_time}, {task.response_time}, {task.waiting_time}, {task.burst_time}")
         print("\n")
-        
+
+
     def cfs_schedule (self):   # task_list is sorted based on arrival time
+        nth_feedback = 1
         while (len(self.task_list) > 0 or len(self.tasks_sorted) > 0):
             if (len(self.task_list) > 0):
                 next_arrived_task = self.task_list[0]
@@ -73,10 +103,16 @@ class CFSScheduler:
 
             next_exec_task = self.tasks_sorted[0]
             self.execute_norm_task (next_exec_task)
+
+            if (self.timer > nth_feedback*self.FEEDBACK_PERIOD): 
+                self.print_avg(self.tasks_to_feedback)
+                nth_feedback += 1
+
             if (len(self.tasks_sorted) == 0):
                 if (len(self.task_list) > 0):
                     self.timer = self.task_list[0].arrival_time      # speed up timer when there's no task in ready queue
                     self.min_vruntime = 0
+                else:
+                    self.print_avg(self.all_tasks_done)
             else:
-                self.min_vruntime = self.tasks_sorted[0].vruntime
-            
+                self.min_vruntime = self.tasks_sorted[0].vruntime 

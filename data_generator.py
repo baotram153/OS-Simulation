@@ -43,7 +43,7 @@ class TaskListGenerator:
     def write_task_lists(self):
         f = open("data.txt", "w")
         f.write("TASK LIST \n")
-        f.write("pid, nice, arrival_time, burst_time")
+        f.write("pid, nice, arrival_time, burst_time \n")
         f.write("====================================================== \n")
         for task in self.task_list:
             f.write(f"{task.pid}, {task.nice}, {task.arrival_time}, {task.burst_time} \n")

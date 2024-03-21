@@ -1,2 +1,5 @@
 # OS-Simulation
-Simulate Linux OS using Python
+*Simulate Linux OS using Python*
+
+## Libraries
+- sortedcontainers

@@ -23,16 +23,6 @@ class Task:
         self.waiting_time = 0
         self.turnaround_time = 0
 
-    def update_if_executed(self, exec_time):
-        self.exec_time += exec_time
-        self.burst_time -= exec_time
-        self.turnaround_time += exec_time
-        self.update_vruntime()
-
-    def update_if_in_queue(self, exec_time):
-        self.waiting_time += exec_time
-        self.turnaround_time += exec_time
-
 
 class Realtime (Task): 
     def __init__(self, priority) -> None:
@@ -44,18 +34,29 @@ class Normal (Task):
     def __init__(self, pid, nice, arrival_time, burst_time) -> None:
         super().__init__(pid, "normal", arrival_time, burst_time)
         # timing unit is micro-second
-        self.SCHED_LATENCY = 24
-        self.MIN_GRANULARITY = 3
-        self.nr_latency = int(self.SCHED_LATENCY / self.MIN_GRANULARITY)
+        # self.SCHED_LATENCY = 24
+        # self.MIN_GRANULARITY = 3
+        # self.nr_latency = int(self.SCHED_LATENCY / self.MIN_GRANULARITY)
         self.nice = nice
+        print(f"nice = {nice}")
         self.weight = nice_table [self.nice]
         self.vruntime = 0
     
-    def update_period (self, nr_running, load_weight):     # the calculation's already considered priority
-        if (nr_running > self.nr_latency) : self.period = self.MIN_GRANULARITY
-        else: self.period = self.SCHED_LATENCY / nr_running
-        self.period = self.period * self.weight / load_weight     # period for each task also depends on priority
+    def update_period (self, nr_running, sched_latency, min_granularity):     # the calculation's already considered priority
+        if ((sched_latency / nr_running) < min_granularity) : self.period = min_granularity
+        else: self.period = sched_latency / nr_running
+        # self.period = self.period * self.weight / load_weight     # period for each thread also depends on priority
     
-    def update_vruntime (self):
+    def update_vruntime (self, vruntime_rate):
         # tasks with higher weight (priority) accumulate vruntime with slower rate -> get to run more
-        self.vruntime += self.exec_time * 1024.0 / self.weight
+        self.vruntime = self.exec_time * 1024.0 / self.weight * vruntime_rate
+
+    def update_if_executed(self, exec_time, vruntime_rate):
+        self.exec_time += exec_time
+        self.burst_time -= exec_time
+        self.turnaround_time += exec_time
+        self.update_vruntime(vruntime_rate)
+
+    def update_if_in_queue(self, exec_time):
+        self.waiting_time += exec_time
+        self.turnaround_time += exec_time

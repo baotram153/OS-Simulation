@@ -5,21 +5,18 @@ import numpy as np
 SEC_TO_MS = 1000000
 
 class TaskListGenerator:
-    def __init__(self) -> None:
+    def __init__(self, env_config) -> None:
         self.task_list = []
-        self.NR_TASK = 10
-        self.NICE_MU = 0
-        self.NICE_SIGMA = 5
-        # self.ARRIVAL_MU = 1*SEC_TO_MS    # second
-        # self.ARRIVAL_SIGMA = 0.5*SEC_TO_MS
-        # self.BURST_MU = 4*SEC_TO_MS
-        # self.BURST_SIGMA = 2*SEC_TO_MS
-        self.ARRIVAL_MU = 5    # second
-        self.ARRIVAL_SIGMA = 2
-        self.BURST_MU = 50
-        self.BURST_SIGMA = 20
+        self.NR_TASK = env_config["NR_TASK"]
+        self.NICE_MU = env_config["NICE_MU"]
+        self.NICE_SIGMA = env_config["NICE_SIGMA"]
+        self.ARRIVAL_MU = env_config["ARRIVAL_MU"]    # microsecond
+        self.ARRIVAL_SIGMA = env_config["ARRIVAL_SIGMA"]
+        self.BURST_MU = env_config["BURST_MU"]
+        self.BURST_SIGMA = env_config["BURST_SIGMA"]
 
     def generate_normal_tasks (self):
+        self.task_list = []
         for i in range (self.NR_TASK):
             nice = np.rint(max(min(np.random.normal(self.NICE_MU, self.NICE_SIGMA), 20), -19))
             arrival_time = max (np.random.normal(self.ARRIVAL_MU, self.ARRIVAL_SIGMA), 0)
@@ -49,7 +46,7 @@ class TaskListGenerator:
             f.write(f"{task.pid}, {task.nice}, {task.arrival_time}, {task.burst_time} \n")
         f.close()
 
-if __name__ == "__main__":
-    task_list = TaskListGenerator()
-    task_list.generate_normal_tasks()
-    task_list.print_task_lists()
+# if __name__ == "__main__":
+#     task_list = TaskListGenerator()
+#     task_list.generate_normal_tasks()
+#     task_list.print_task_lists()

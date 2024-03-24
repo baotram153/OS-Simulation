@@ -1,4 +1,5 @@
 from sortedcontainers import SortedKeyList
+import numpy as np
 
 # SortedKeyList sorts in an ascending order
 un_sorted = [1,2,3,4,5]
@@ -25,3 +26,18 @@ print(sorted_list)
 sorted_list.pop(0)
 sorted_list.add("hello")
 print(sorted_list)
+
+# broadcast and multiply element-wise
+ones = np.ones((4,3))
+another = [1,2,3]
+ele_wise_mult = np.multiply(ones, another)
+print(ele_wise_mult)
+
+
+list = [[1,2], [3,4]]
+array = np.array(list)
+print(array)
+
+list1 = list
+list1.clear()
+print(list1)

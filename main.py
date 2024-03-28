@@ -7,15 +7,16 @@ Works to do:
 '''
 
 import data_generator, cfs
-import ray
+from ray import tune
 from ray.tune.logger import pretty_print
-from ray.rllib.algorithms import ppo
+from ray.rllib.algorithms import PPOConfig
 from env import OSEnv
+import time
 
 SEC_TO_MS = 1000000
 
 class Test:
-    def __init__(self, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA) -> None:
+    def __init__(self, N_ITERATIONS, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA) -> None:
         self.env_config = {}
         self.env_config["NR_TASK"] = NR_TASK
         self.env_config["NICE_MU"] = NICE_MU
@@ -28,26 +29,54 @@ class Test:
         self.env_config["ARRIVAL_SIGMA"] = ARRIVAL_SIGMA
         self.env_config["BURST_MU"] = BURST_MU
         self.env_config["BURST_SIGMA"] = BURST_SIGMA
-        self.env = OSEnv(data_config = self.env_config)
+        # self.env = OSEnv(env_config = self.env_config)
+        self.env_config["N_ITERATIONS"] = N_ITERATIONS
+        self.N_ITERATIONS = N_ITERATIONS
 
-    def test_cfs_scheduling(self):
-        ray.init()
-        algo = ppo.PPO(env=OSEnv, config={
-            "env_config": self.env_config,  # config to pass to env class
-        })
-        for i in range(10):
+    def test_cfs_scheduling(self, plot = False):
+        algo = (
+            PPOConfig()
+            .rollouts(num_rollout_workers=1, batch_mode= "truncate_episodes")
+            .resources(num_gpus=0)
+            .environment(env=OSEnv, env_config= self.env_config)
+            .build()
+        )
+        for i in range(self.N_ITERATIONS):
+            print(f"Iteration {i}=======================================")
+            time.sleep(2)
             result = algo.train()
             print(pretty_print(result))
 
-            if i % 5 == 0:
-                checkpoint_dir = algo.save().checkpoint.path
-                print(f"Checkpoint saved in directory {checkpoint_dir}")
+            checkpoint_dir = algo.save().checkpoint.path
+            print(f"Checkpoint saved in directory {checkpoint_dir}")
+
+        # tune.run(
+        # "PPO",
+        # checkpoint_freq=10,
+        # config={
+        #     "env": OSEnv,
+        #     "entropy_coeff": 0.01,
+        #     "train_batch_size": 5000,
+        #     "sample_batch_size": 100,
+        #     "sgd_minibatch_size": 500,
+        #     "num_workers": 1,
+        #     "num_envs_per_worker": 1,
+        #     "gamma": 0.95,
+        #     "batch_mode": "complete_episodes",
+        #     "num_gpus": 1,
+        #     "env_config": self.env_config
+        #     })
+
+    def test_baseline(self, n_iterations, plot = False):
+        env = OSEnv(self.env_config)
+        env.test_baseline(n_iterations, plot)
         
 
 # params
+N_ITERATIONS = 100
 NR_TASK = 10
 NICE_MU = 0
-NICE_SIGMA = 5
+NICE_SIGMA = 10
 # self.ARRIVAL_MU = 1*SEC_TO_MS    # second
 # self.ARRIVAL_SIGMA = 0.5*SEC_TO_MS
 # self.BURST_MU = 4*SEC_TO_MS
@@ -57,5 +86,6 @@ ARRIVAL_SIGMA = 2
 BURST_MU = 50
 BURST_SIGMA = 20
 
-test = Test(NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA)
+test = Test(N_ITERATIONS, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA)
 test.test_cfs_scheduling()
+# test.test_baseline(30, True)

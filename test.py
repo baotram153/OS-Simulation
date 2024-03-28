@@ -41,3 +41,6 @@ print(array)
 list1 = list
 list1.clear()
 print(list1)
+
+mat = np.array([[1,2], [3,4]])
+print(mat - np.array([1,1]))

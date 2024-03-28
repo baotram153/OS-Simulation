@@ -17,7 +17,7 @@ class Scheduler:
         avg_waiting_time = np.average([task.waiting_time for task in task_list])
         avg_turnaround_time = np.average([task.turnaround_time for task in task_list])
         task_list.clear()
-        return avg_response_time, avg_waiting_time, avg_turnaround_time
+        return np.array([avg_response_time, avg_waiting_time, avg_turnaround_time])
     
     def print_avg(self, task_list):
         nr_tasks = len(task_list)
@@ -72,7 +72,7 @@ class CFSScheduler (Scheduler):
             self.load_weight -= task.weight
             self.all_tasks_done.append(task)
             self.tasks_to_feedback.append(task)
-            self.print_proc_in_queue()
+            # self.print_proc_in_queue()
 
     def print_proc_in_queue (self):
         print (f"TIMER: {self.timer} -- CURRENT PROCESSES IN READY QUEUE (VRUNTIME ASCENDED)")
@@ -101,21 +101,21 @@ class CFSScheduler (Scheduler):
                     self.nr_running += 1
                     self.load_weight += next_arrived_task.weight
                     self.update_load_weight(next_arrived_task.weight)
-                    self.print_proc_in_queue()
+                    # self.print_proc_in_queue()
 
             next_exec_task = self.tasks_sorted[0]
             self.execute_norm_task (next_exec_task)
 
-            if (self.timer > self.nth_feedback*self.FEEDBACK_PERIOD): 
-                self.print_avg(self.tasks_to_feedback)
-                self.nth_feedback += 1
+            # if (self.timer > self.nth_feedback*self.FEEDBACK_PERIOD): 
+            #     self.print_avg(self.tasks_to_feedback)
+            #     self.nth_feedback += 1
 
             if (len(self.tasks_sorted) == 0):
                 if (len(self.task_list) > 0):
                     self.timer = self.task_list[0].arrival_time      # speed up timer when there's no task in ready queue
                     self.min_vruntime = 0
                 else:
-                    self.print_avg(self.all_tasks_done)
+                    return np.array(self.calc_avg(self.all_tasks_done))
             else:
                 self.min_vruntime = self.tasks_sorted[0].vruntime 
 
@@ -129,14 +129,14 @@ class CFSScheduler (Scheduler):
                 if (next_arrived_task.arrival_time <= self.timer):
                     self.task_list.pop(0)
                     self.tasks_sorted.add(next_arrived_task)
-                    next_arrived_task.waiting_time = self.timer
-                    next_arrived_task.turnaround_time = self.timer
-                    next_arrived_task.response_time = self.timer
+                    next_arrived_task.waiting_time = self.timer - next_arrived_task.arrival_time
+                    next_arrived_task.turnaround_time = self.timer - next_arrived_task.arrival_time
+                    next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
                     next_arrived_task.vruntime = self.min_vruntime
                     self.nr_running += 1
                     self.load_weight += next_arrived_task.weight
                     self.update_load_weight(next_arrived_task.weight)
-                    self.print_proc_in_queue()
+                    # self.print_proc_in_queue()
 
             next_exec_task = self.tasks_sorted[0]
             self.execute_norm_task (next_exec_task)
@@ -151,10 +151,13 @@ class CFSScheduler (Scheduler):
                     self.timer = self.task_list[0].arrival_time      # speed up timer when there's no task in ready queue
                     self.min_vruntime = 0
                 else:
-                    self.print_avg(self.all_tasks_done)
+                    # print("End episode")
+                    pass
             else:
                 self.min_vruntime = self.tasks_sorted[0].vruntime 
             # print(self.tasks_sorted)
             if (return_flag): return self.tasks_sorted, new_res, False
         new_res = self.calc_avg(self.tasks_to_feedback)
-        return self.tasks_sorted, new_res, True
+        new_res_all = self.calc_avg(self.all_tasks_done)
+        # print(np.array([new_res, new_res_all]))
+        return self.tasks_sorted, np.array([new_res, new_res_all]), True

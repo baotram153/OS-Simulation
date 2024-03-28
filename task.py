@@ -6,7 +6,7 @@ nice_table = {
     0: 1024, 1: 820, 2: 655, 3: 526, 4: 423,
     5: 335, 6: 272, 7: 215, 8: 172, 9: 137,
     10: 110, 11: 87, 12: 70, 13: 56, 14: 45,
-    15: 36, 16: 29, 17: 23, 18: 18, 19: 15, }
+    15: 36, 16: 29, 17: 23, 18: 18, 19: 15}
 
 class Task:
     def __init__(self, pid, type, arrival_time, burst_time) -> None:
@@ -38,7 +38,7 @@ class Normal (Task):
         # self.MIN_GRANULARITY = 3
         # self.nr_latency = int(self.SCHED_LATENCY / self.MIN_GRANULARITY)
         self.nice = nice
-        print(f"nice = {nice}")
+        # print(f"nice = {nice}")
         self.weight = nice_table [self.nice]
         self.vruntime = 0
     

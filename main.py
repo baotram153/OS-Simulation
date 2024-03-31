@@ -6,7 +6,7 @@ Works to do:
     - Implement a clock to give back control to OS when timeslice exceeded?
 '''
 
-import data_generator, cfs
+import data_generator, scheduler.cfs as cfs
 from ray import tune
 from ray.tune.logger import pretty_print
 from ray.rllib.algorithms import PPOConfig
@@ -73,7 +73,7 @@ class Test:
         
 
 # params
-N_ITERATIONS = 100
+N_ITERATIONS = 10
 NR_TASK = 10
 NICE_MU = 0
 NICE_SIGMA = 10
@@ -81,11 +81,11 @@ NICE_SIGMA = 10
 # self.ARRIVAL_SIGMA = 0.5*SEC_TO_MS
 # self.BURST_MU = 4*SEC_TO_MS
 # self.BURST_SIGMA = 2*SEC_TO_MS
-ARRIVAL_MU = 5    # microsecond
-ARRIVAL_SIGMA = 2
-BURST_MU = 50
+ARRIVAL_MU = 50    # microsecond
+ARRIVAL_SIGMA = 20
+BURST_MU = 60
 BURST_SIGMA = 20
 
 test = Test(N_ITERATIONS, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA)
-test.test_cfs_scheduling()
-# test.test_baseline(30, True)
+# test.test_cfs_scheduling()
+test.test_baseline(1, True)

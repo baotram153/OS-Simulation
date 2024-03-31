@@ -1,34 +1,10 @@
 import numpy as np
 from sortedcontainers import SortedKeyList
 from task import Task, Normal, Realtime
+from scheduler.scheduler import Scheduler
 
-MIGRATION_COST = 0.5
-NR_MIGRATE = 32
-
-class Scheduler:
-    def __init__(self) -> None:
-        self.all_tasks_done = []
-        self.FEEDBACK_PERIOD = 100     # microsecond
-        self.nth_feedback = 1
-        self.tasks_to_feedback = []
-
-    def calc_avg(self, task_list):
-        avg_response_time = np.average([task.response_time for task in task_list])
-        avg_waiting_time = np.average([task.waiting_time for task in task_list])
-        avg_turnaround_time = np.average([task.turnaround_time for task in task_list])
-        task_list.clear()
-        return np.array([avg_response_time, avg_waiting_time, avg_turnaround_time])
-    
-    def print_avg(self, task_list):
-        nr_tasks = len(task_list)
-        avg_response_time, avg_waiting_time, avg_turnaround_time = self.calc_avg(task_list)
-        print("CALCULATE AVERAGE")
-        print("==========================================")
-        print(f"- Number of tasks: {nr_tasks}")
-        print(f"- Average response time: {avg_response_time}")
-        print(f"- Average waiting time: {avg_waiting_time}")
-        print(f"- Average turnaround time: {avg_turnaround_time}")
-        print("\n")
+# MIGRATION_COST = 0.5
+# NR_MIGRATE = 32
 
 class CFSScheduler (Scheduler):
     def __init__(self, task_list) -> None:
@@ -72,7 +48,7 @@ class CFSScheduler (Scheduler):
             self.load_weight -= task.weight
             self.all_tasks_done.append(task)
             self.tasks_to_feedback.append(task)
-            # self.print_proc_in_queue()
+            self.print_proc_in_queue()
 
     def print_proc_in_queue (self):
         print (f"TIMER: {self.timer} -- CURRENT PROCESSES IN READY QUEUE (VRUNTIME ASCENDED)")
@@ -85,23 +61,28 @@ class CFSScheduler (Scheduler):
     def reconfig_param (self, param_config):
         self.SCHED_LATENCY, self.MIN_GRANULARITY, self.VRUNTIME_RATE = param_config
 
+    def check_tasklist(self) -> bool:
+        next_arrived_task = self.task_list[0]
+        if (next_arrived_task.arrival_time <= self.timer):
+            self.task_list.pop(0)
+            self.tasks_sorted.add(next_arrived_task)
+            next_arrived_task.waiting_time = self.timer - next_arrived_task.arrival_time
+            next_arrived_task.turnaround_time = self.timer - next_arrived_task.arrival_time
+            next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
+            next_arrived_task.vruntime = self.min_vruntime
+            self.nr_running += 1
+            self.load_weight += next_arrived_task.weight
+            self.update_load_weight(next_arrived_task.weight)
+            self.print_proc_in_queue()
+            return True
+        return False
 
     # schedule until there're no tasks left -> used for testing
     def cfs_schedule (self):   # task_list is sorted based on arrival time
         while (len(self.task_list) > 0 or len(self.tasks_sorted) > 0):
-            if (len(self.task_list) > 0):
-                next_arrived_task = self.task_list[0]
-                if (next_arrived_task.arrival_time <= self.timer):
-                    self.task_list.pop(0)
-                    self.tasks_sorted.add(next_arrived_task)
-                    next_arrived_task.waiting_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.turnaround_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.vruntime = self.min_vruntime
-                    self.nr_running += 1
-                    self.load_weight += next_arrived_task.weight
-                    self.update_load_weight(next_arrived_task.weight)
-                    # self.print_proc_in_queue()
+            if (len(self.task_list) > 0): new_task_arrived = self.check_tasklist ()
+            while (len(self.task_list) > 0 and new_task_arrived == True):
+                new_task_arrived = self.check_tasklist ()
 
             next_exec_task = self.tasks_sorted[0]
             self.execute_norm_task (next_exec_task)

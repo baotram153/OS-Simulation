@@ -44,3 +44,10 @@ print(list1)
 
 mat = np.array([[1,2], [3,4]])
 print(mat - np.array([1,1]))
+
+from enum import Enum
+
+Color = Enum('Colorr', ['RED', 'GREEN', 'BLUE'])
+color = Color.RED
+if (color == Color.RED):
+    print(color)

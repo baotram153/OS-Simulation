@@ -23,7 +23,7 @@ class TaskListGenerator:
             burst_time = max (np.random.normal(self.BURST_MU, self.BURST_SIGMA), 0)
             new_task = task.Normal (i, nice, arrival_time, burst_time)
             self.task_list.append(new_task)
-        # self.write_task_lists()
+        self.write_task_lists()
 
     def generate_realtime_tasks (self):
         pass

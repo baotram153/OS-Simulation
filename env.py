@@ -3,7 +3,7 @@ import numpy as np
 import seaborn as sns
 from matplotlib import pyplot as plt
 import pandas as pd
-import cfs
+import scheduler.cfs as cfs
 import data_generator
 from sortedcontainers import SortedKeyList
 from copy import deepcopy
@@ -12,13 +12,13 @@ class OSEnv (gym.Env) :
     def __init__(self, env_config) -> None:     # data_config is a dictionary
         # data_config (work load) is fixed when training
         super().__init__()
-        self.STATE_SPACE_DIM = 10
         self.ACTION_MEAN = [24, 3, 1]      # latency, min_granularity, vruntime_rate
         self.ACTION_STD = [5, 1, 1]
         self.action_space = gym.spaces.Box(low = -1, high=1, dtype=np.float32, shape=(3,))
+        self.STATE_SPACE_DIM = 10
         self.OBSERVATION_MIN = np.zeros((self.STATE_SPACE_DIM, 5))    # nice, exec time, response time, waiting time, vruntime
         self.OBSERVATION_MIN[:,0] = -20
-        self.OBSERVATION_MAX = np.multiply(np.ones((self.STATE_SPACE_DIM, 5)),np.array([19, 2000, 1000, 1000, 10000]))
+        self.OBSERVATION_MAX = np.multiply(np.ones((self.STATE_SPACE_DIM, 5)),np.array([19, 2000, 1000, 1000, 15000]))
         self.observation_space = gym.spaces.Box(low = -1, high = 1, shape= (self.STATE_SPACE_DIM, 5))
         self.RES_MAX = [1000, 2000, 2000]    # avg response time, avg waiting time, avg turnaround time
         self.n_episode = 1
@@ -30,7 +30,7 @@ class OSEnv (gym.Env) :
 
     def calc_reward (self, new_res) -> float:
         if (len(new_res) == 0 or len(self.old_res) == 0): return 0    # happen when there're no tasks done in a time period
-        improve_rate = np.average(new_res, weights=[1,1,1]) / np.average(self.old_res, weights= [1,1,1])
+        improve_rate = np.average(new_res, weights=[6,1,1]) / np.average(self.old_res, weights= [6,1,1])
         if (improve_rate < 0.96): reward = 1
         elif (improve_rate > 1.5): reward = -1
         else: reward = 0

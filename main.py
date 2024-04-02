@@ -6,8 +6,8 @@ Works to do:
     - Implement a clock to give back control to OS when timeslice exceeded?
 '''
 
-import data_generator, scheduler.cfs as cfs
-from ray import tune
+# import data_generator, scheduler.cfs as cfs
+# from ray import tune
 from ray.tune.logger import pretty_print
 from ray.rllib.algorithms import PPOConfig
 from env import OSEnv
@@ -43,7 +43,7 @@ class Test:
         )
         for i in range(self.N_ITERATIONS):
             print(f"Iteration {i}=======================================")
-            time.sleep(2)
+            # time.sleep(2)
             result = algo.train()
             print(pretty_print(result))
 
@@ -67,13 +67,13 @@ class Test:
         #     "env_config": self.env_config
         #     })
 
-    def test_baseline(self, n_iterations, plot = False):
+    def test_baseline(self, n_iterations, plot = True):
         env = OSEnv(self.env_config)
-        env.test_baseline(n_iterations, plot)
+        env.test_baseline(n_iterations)
         
 
 # params
-N_ITERATIONS = 10
+N_ITERATIONS = 200
 NR_TASK = 10
 NICE_MU = 0
 NICE_SIGMA = 10
@@ -87,5 +87,5 @@ BURST_MU = 60
 BURST_SIGMA = 20
 
 test = Test(N_ITERATIONS, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA)
-# test.test_cfs_scheduling()
-test.test_baseline(1, True)
+test.test_cfs_scheduling()
+# test.test_baseline(10000)

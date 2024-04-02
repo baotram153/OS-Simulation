@@ -27,6 +27,7 @@ class Task:
         self.response_time = 0
         self.waiting_time = 0
         self.turnaround_time = 0
+        self.first_time_scheduled = True
 
 
 class Realtime (Task): 

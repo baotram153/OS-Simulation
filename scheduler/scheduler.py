@@ -4,7 +4,7 @@ import numpy as np
 class Scheduler:
     def __init__(self) -> None:
         self.all_tasks_done = []
-        self.FEEDBACK_PERIOD = 300    # microsecond
+        self.FEEDBACK_PERIOD = 200    # microsecond
         self.nth_feedback = 1
         self.tasks_to_feedback = []
 

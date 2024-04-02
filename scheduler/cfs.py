@@ -29,6 +29,9 @@ class CFSScheduler (Scheduler):
 
     def execute_norm_task (self, task : Normal):
         task.update_period(self.nr_running, self.SCHED_LATENCY, self.MIN_GRANULARITY)
+        if (task.first_time_scheduled == True):
+            task.response_time = self.timer - task.arrival_time
+            task.first_time_scheduled = False
         if (task.burst_time < task.period): exec_time = task.burst_time
         else: exec_time = task.period
         self.timer += exec_time
@@ -48,7 +51,7 @@ class CFSScheduler (Scheduler):
             self.load_weight -= task.weight
             self.all_tasks_done.append(task)
             self.tasks_to_feedback.append(task)
-            self.print_proc_in_queue()
+            # self.print_proc_in_queue()
 
     def print_proc_in_queue (self):
         print (f"TIMER: {self.timer} -- CURRENT PROCESSES IN READY QUEUE (VRUNTIME ASCENDED)")
@@ -68,12 +71,12 @@ class CFSScheduler (Scheduler):
             self.tasks_sorted.add(next_arrived_task)
             next_arrived_task.waiting_time = self.timer - next_arrived_task.arrival_time
             next_arrived_task.turnaround_time = self.timer - next_arrived_task.arrival_time
-            next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
+            # next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
             next_arrived_task.vruntime = self.min_vruntime
             self.nr_running += 1
             self.load_weight += next_arrived_task.weight
             self.update_load_weight(next_arrived_task.weight)
-            self.print_proc_in_queue()
+            # self.print_proc_in_queue()
             return True
         return False
 
@@ -104,28 +107,21 @@ class CFSScheduler (Scheduler):
     def cfs_schedule_until_feedback (self, param_config):
         self.reconfig_param (param_config)
         return_flag = False
+        new_res = []
         while (len(self.task_list) > 0 or len(self.tasks_sorted) > 0):
-            if (len(self.task_list) > 0):
-                next_arrived_task = self.task_list[0]
-                if (next_arrived_task.arrival_time <= self.timer):
-                    self.task_list.pop(0)
-                    self.tasks_sorted.add(next_arrived_task)
-                    next_arrived_task.waiting_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.turnaround_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.response_time = self.timer - next_arrived_task.arrival_time
-                    next_arrived_task.vruntime = self.min_vruntime
-                    self.nr_running += 1
-                    self.load_weight += next_arrived_task.weight
-                    self.update_load_weight(next_arrived_task.weight)
-                    # self.print_proc_in_queue()
+            if (len(self.task_list) > 0): new_task_arrived = self.check_tasklist ()
+            while (len(self.task_list) > 0 and new_task_arrived == True):
+                new_task_arrived = self.check_tasklist ()
 
             next_exec_task = self.tasks_sorted[0]
             self.execute_norm_task (next_exec_task)
 
-            if (self.timer > self.nth_feedback*self.FEEDBACK_PERIOD): 
-                new_res = self.calc_avg(self.tasks_to_feedback)
+            if (self.timer > self.nth_feedback*self.FEEDBACK_PERIOD):
+                if (len(self.tasks_to_feedback) > 0): 
+                    return_flag = True
+                    new_res = self.calc_avg(self.tasks_to_feedback)
+                else: return_flag = False
                 self.nth_feedback += 1
-                return_flag = True
 
             if (len(self.tasks_sorted) == 0):
                 if (len(self.task_list) > 0):
@@ -141,4 +137,5 @@ class CFSScheduler (Scheduler):
         new_res = self.calc_avg(self.tasks_to_feedback)
         new_res_all = self.calc_avg(self.all_tasks_done)
         # print(np.array([new_res, new_res_all]))
-        return self.tasks_sorted, np.array([new_res, new_res_all]), True
+        # return self.tasks_sorted, np.array([new_res, new_res_all]), True
+        return self.tasks_sorted, new_res_all, True

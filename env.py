@@ -24,6 +24,7 @@ class OSEnv (gym.Env) :
         self.n_episode = 1
         self.PLOT_PERIOD = 10
         self.PLOT_AVG_PERIOD = 1000
+        self.N_EPS_IN_ITERATION = 1100
         self.x_axis = 0
         self.res_list = []
         self.reward_list = []
@@ -107,7 +108,7 @@ class OSEnv (gym.Env) :
             self.res_list.append(new_res)
             # self.reward_list.append(np.matmul(np.array(new_res_all), np.array([6,1,1])))
             self.reward_list.append(np.matmul(np.array(new_res), np.array([6,1,1])))
-        if (self.n_episode == self.N_ITERATIONS*1100 and terminated == True):
+        if (self.n_episode == self.N_ITERATIONS*self.N_EPS_IN_ITERAION and terminated == True):
             self.plot()
         return new_observation, reward, terminated, False, {}
     

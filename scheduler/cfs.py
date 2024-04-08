@@ -51,7 +51,7 @@ class CFSScheduler (Scheduler):
             self.load_weight -= task.weight
             self.all_tasks_done.append(task)
             self.tasks_to_feedback.append(task)
-            # self.print_proc_in_queue()
+            self.print_proc_in_queue()
 
     def print_proc_in_queue (self):
         print (f"TIMER: {self.timer} -- CURRENT PROCESSES IN READY QUEUE (VRUNTIME ASCENDED)")
@@ -76,7 +76,7 @@ class CFSScheduler (Scheduler):
             self.nr_running += 1
             self.load_weight += next_arrived_task.weight
             self.update_load_weight(next_arrived_task.weight)
-            # self.print_proc_in_queue()
+            self.print_proc_in_queue()
             return True
         return False
 

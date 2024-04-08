@@ -9,7 +9,7 @@ Works to do:
 # import data_generator, scheduler.cfs as cfs
 # from ray import tune
 from ray.tune.logger import pretty_print
-from ray.rllib.algorithms import PPOConfig
+from ray.rllib.algorithms import PPOConfig, SACConfig
 from env import OSEnv
 import time
 
@@ -33,7 +33,7 @@ class Test:
         self.env_config["N_ITERATIONS"] = N_ITERATIONS
         self.N_ITERATIONS = N_ITERATIONS
 
-    def test_cfs_scheduling(self, plot = False):
+    def test_PPO(self):
         algo = (
             PPOConfig()
             .rollouts(num_rollout_workers=1, batch_mode= "truncate_episodes")
@@ -67,13 +67,31 @@ class Test:
         #     "env_config": self.env_config
         #     })
 
-    def test_baseline(self, n_iterations, plot = True):
+    def test_SAC (self):
+        algo = (
+            SACConfig()
+            .training()
+            .rollouts(num_rollout_workers=1, batch_mode= "truncate_episodes")
+            .resources(num_gpus=0)
+            .environment(env=OSEnv, env_config= self.env_config)
+            .build()
+        )
+        for i in range(self.N_ITERATIONS):
+            print(f"Iteration {i}=======================================")
+            # time.sleep(2)
+            result = algo.train()
+            print(pretty_print(result))
+
+            checkpoint_dir = algo.save().checkpoint.path
+            print(f"Checkpoint saved in directory {checkpoint_dir}")
+
+    def test_baseline(self, n_iterations):
         env = OSEnv(self.env_config)
         env.test_baseline(n_iterations)
         
 
 # params
-N_ITERATIONS = 200
+N_ITERATIONS = 100
 NR_TASK = 10
 NICE_MU = 0
 NICE_SIGMA = 10
@@ -87,5 +105,6 @@ BURST_MU = 60
 BURST_SIGMA = 20
 
 test = Test(N_ITERATIONS, NR_TASK, NICE_MU, NICE_SIGMA, ARRIVAL_MU, ARRIVAL_SIGMA, BURST_MU, BURST_SIGMA)
-test.test_cfs_scheduling()
-# test.test_baseline(10000)
+# test.test_SAC()
+# test.test_PPO()
+test.test_baseline(1)
